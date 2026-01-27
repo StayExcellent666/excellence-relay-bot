@@ -58,9 +58,34 @@ client.on("messageCreate", async (message) => {
   }
 
   try {
-    const embeds = message.embeds.length
-      ? message.embeds.map(e => e.toJSON())
-      : undefined;
+    // --- MODIFY STREAMCORD EMBEDS ---
+const FIND = "Give them some support ->";
+const REPLACE = "Come hang out and enjoy the vibes 💜 →";
+
+const embeds = message.embeds.length
+  ? message.embeds.map(e => {
+      const embed = e.toJSON();
+
+      if (embed.title) {
+        embed.title = embed.title.split(FIND).join(REPLACE);
+      }
+
+      if (embed.description) {
+        embed.description = embed.description.split(FIND).join(REPLACE);
+      }
+
+      if (Array.isArray(embed.fields)) {
+        embed.fields = embed.fields.map(f => ({
+          ...f,
+          name: f.name ? f.name.split(FIND).join(REPLACE) : f.name,
+          value: f.value ? f.value.split(FIND).join(REPLACE) : f.value,
+        }));
+      }
+
+      return embed;
+    })
+  : undefined;
+
 
     const files = message.attachments.size
       ? [...message.attachments.values()].map(a => a.url)
@@ -94,3 +119,4 @@ process.on("unhandledRejection", err =>
 process.on("uncaughtException", err =>
   console.error("UNCAUGHT EXCEPTION:", err)
 );
+
