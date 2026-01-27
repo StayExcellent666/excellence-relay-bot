@@ -1,5 +1,7 @@
-// ================== KEEP RENDER AWAKE ==================
 const express = require("express");
+const { Client, GatewayIntentBits, WebhookClient } = require("discord.js");
+
+// ---- WEB SERVER (Render needs this) ----
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -8,26 +10,14 @@ app.listen(PORT, () => {
   console.log(`🌐 Listening on port ${PORT}`);
 });
 
-// ================== DISCORD BOT ==================
-const { Client, GatewayIntentBits, WebhookClient } = require("discord.js");
+// ---- CONFIG ----
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const SOURCE_CHANNEL_ID = process.env.SOURCE_CHANNEL_ID;
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
-// ---- ENV VARS (trimmed to avoid hidden whitespace bugs)
-const BOT_TOKEN = (process.env.BOT_TOKEN || "").trim();
-const SOURCE_CHANNEL_ID = (process.env.SOURCE_CHANNEL_ID || "").trim();
-const WEBHOOK_URL = (process.env.WEBHOOK_URL || "").trim();
+const webhook = new WebhookClient({ url: WEBHOOK_URL });
 
-// ---- ENV SANITY CHECK
-console.log("ENV CHECK:", {
-  BOT_TOKEN: BOT_TOKEN ? "set" : "MISSING",
-  SOURCE_CHANNEL_ID: SOURCE_CHANNEL_ID ? "set" : "MISSING",
-  WEBHOOK_URL: WEBHOOK_URL ? "set" : "MISSING",
-});
-
-if (!BOT_TOKEN || !SOURCE_CHANNEL_ID || !WEBHOOK_URL) {
-  throw new Error("❌ Missing environment variables");
-}
-
-// ---- CLIENT
+// ---- DISCORD CLIENT ----
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -36,20 +26,19 @@ const client = new Client({
   ],
 });
 
-// ---- WEBHOOK
-const webhook = new WebhookClient({ url: WEBHOOK_URL });
-
-// ---- LOGIN EVENTS
+// ---- READY ----
 client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-client.on("error", (e) => console.error("DISCORD ERROR:", e));
-client.on("warn", (w) => console.warn("DISCORD WARN:", w));
-
-// ---- MESSAGE HANDLER
+// ---- MESSAGE HANDLER ----
 client.on("messageCreate", async (message) => {
-  console.log("SAW MESSAGE:", message.channelId, message.author.username);
+  console.log(
+    "SAW:",
+    message.guild?.name,
+    "#"+message.channel?.name,
+    message.author.username
+  );
 
   // Only forward from source channel
   if (message.channelId !== SOURCE_CHANNEL_ID) {
@@ -58,34 +47,30 @@ client.on("messageCreate", async (message) => {
   }
 
   try {
-    // --- MODIFY STREAMCORD EMBEDS ---
-const FIND = "streamcord.io";
-const REPLACE = "brought to you by your Excellency";
+    // ---- MODIFY STREAMCORD EMBEDS ----
+    const embeds = message.embeds.length
+      ? message.embeds.map(e => {
+          const embed = e.toJSON();
 
-const embeds = message.embeds.length
-  ? message.embeds.map(e => {
-      const embed = e.toJSON();
+          // Rename "Viewers" → "Gamers"
+          if (Array.isArray(embed.fields)) {
+            embed.fields = embed.fields.map(f => ({
+              ...f,
+              name: f.name === "Viewers" ? "Gamers" : f.name,
+            }));
+          }
 
-      if (embed.title) {
-        embed.title = embed.title.split(FIND).join(REPLACE);
-      }
+          // Replace "streamcord.io" in footer
+          if (embed.footer?.text) {
+            embed.footer.text = embed.footer.text.replace(
+              /streamcord\.io/gi,
+              "Excellence"
+            );
+          }
 
-      if (embed.description) {
-        embed.description = embed.description.split(FIND).join(REPLACE);
-      }
-
-      if (Array.isArray(embed.fields)) {
-        embed.fields = embed.fields.map(f => ({
-          ...f,
-          name: f.name ? f.name.split(FIND).join(REPLACE) : f.name,
-          value: f.value ? f.value.split(FIND).join(REPLACE) : f.value,
-        }));
-      }
-
-      return embed;
-    })
-  : undefined;
-
+          return embed;
+        })
+      : undefined;
 
     const files = message.attachments.size
       ? [...message.attachments.values()].map(a => a.url)
@@ -95,29 +80,16 @@ const embeds = message.embeds.length
       content: message.content || null,
       embeds,
       files,
-      username: "Excellence",
-      avatarURL:
-        "https://cdn.discordapp.com/attachments/1091844470737227944/1465524732677062729/ChatGPT_Image_Jan_27_2026_02_04_53_AM.png",
+      username: message.member?.displayName || message.author.username,
+      avatarURL: message.author.displayAvatarURL(),
       allowedMentions: { parse: [] },
     });
 
     console.log("SENT ✅");
   } catch (err) {
-    console.error("WEBHOOK FAILED ❌", err);
+    console.error("❌ WEBHOOK ERROR:", err);
   }
 });
 
-// ---- START BOT
-client.login(BOT_TOKEN).catch(err => {
-  console.error("LOGIN FAILED ❌", err);
-});
-
-// ---- SAFETY NET
-process.on("unhandledRejection", err =>
-  console.error("UNHANDLED REJECTION:", err)
-);
-process.on("uncaughtException", err =>
-  console.error("UNCAUGHT EXCEPTION:", err)
-);
-
-
+// ---- LOGIN ----
+client.login(BOT_TOKEN);
