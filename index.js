@@ -59,16 +59,16 @@ client.on("messageCreate", async (message) => {
   if (message.channelId !== SOURCE_CHANNEL_ID) return;
 
   try {
-    // ---- MODIFY STREAMCORD EMBEDS ----
+    // ---- MODIFY FOOTER EMBEDS ----
     const embeds = message.embeds.length
       ? message.embeds.map((e) => {
           const embed = e.toJSON();
         
-          // Replace "streamcord.io" -> "Excellence" in footer
+          // Replace footer -> "brought to you by your Excellency" in footer
          if (embed.footer?.text) {
-          embed.footer.text = embed.footer.text.replace(/streamcord\.io/gi, "Excellence");
+          embed.footer.text = embed.footer.text.replace(/streamcord\.io/gi, "brought to you by your Excellency");
           } else {
-          embed.footer = { text: "Excellence" };
+          embed.footer = { text: "brought to you by your Excellency" };
         }
 
 
@@ -114,4 +114,5 @@ client.on("messageCreate", async (message) => {
 client.login(BOT_TOKEN).catch((err) => {
   console.error("LOGIN FAILED ❌", err);
 });
+
 
