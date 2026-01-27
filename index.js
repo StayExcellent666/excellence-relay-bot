@@ -17,6 +17,15 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const SOURCE_CHANNEL_ID = process.env.SOURCE_CHANNEL_ID;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 // ====================
+console.log("ENV CHECK:", {
+  BOT_TOKEN: BOT_TOKEN ? "set" : "MISSING",
+  SOURCE_CHANNEL_ID: SOURCE_CHANNEL_ID ? "set" : "MISSING",
+  WEBHOOK_URL: WEBHOOK_URL ? "set" : "MISSING",
+});
+
+if (!BOT_TOKEN || !SOURCE_CHANNEL_ID || !WEBHOOK_URL) {
+  throw new Error("Missing env vars. Check Render Environment Variables keys.");
+}
 
 const client = new Client({
   intents: [
@@ -62,4 +71,5 @@ client.on("messageCreate", async (message) => {
 });
 
 client.login(BOT_TOKEN);
+
 
