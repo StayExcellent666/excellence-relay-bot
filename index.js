@@ -1,3 +1,15 @@
+
+const express = require("express");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => res.send("Bot is running"));
+
+app.listen(PORT, () => {
+  console.log(`🌐 Listening on port ${PORT}`);
+});
+
 const { Client, GatewayIntentBits, WebhookClient } = require("discord.js");
 
 // ====== CONFIG ======
@@ -50,3 +62,4 @@ client.on("messageCreate", async (message) => {
 });
 
 client.login(BOT_TOKEN);
+
