@@ -59,8 +59,8 @@ client.on("messageCreate", async (message) => {
 
   try {
     // --- MODIFY STREAMCORD EMBEDS ---
-const FIND = "Give them some support ->";
-const REPLACE = "Come hang out and enjoy the vibes 💜 →";
+const FIND = "streamcord.io";
+const REPLACE = "brought to you by your Excellency";
 
 const embeds = message.embeds.length
   ? message.embeds.map(e => {
@@ -119,4 +119,5 @@ process.on("unhandledRejection", err =>
 process.on("uncaughtException", err =>
   console.error("UNCAUGHT EXCEPTION:", err)
 );
+
 
