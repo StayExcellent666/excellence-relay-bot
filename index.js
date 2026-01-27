@@ -65,12 +65,12 @@ client.on("messageCreate", async (message) => {
           const embed = e.toJSON();
         
           // Replace "streamcord.io" -> "Excellence" in footer
-          if (embed.footer?.text) {
-            embed.footer.text = embed.footer.text.replace(
-              /streamcord\.io/gi,
-              "brought to you by your Excellency"
-            );
-          }
+         if (embed.footer?.text) {
+          embed.footer.text = embed.footer.text.replace(/streamcord\.io/gi, "Excellence");
+          } else {
+          embed.footer = { text: "Excellence" };
+        }
+
 
           return embed;
         })
@@ -114,3 +114,4 @@ client.on("messageCreate", async (message) => {
 client.login(BOT_TOKEN).catch((err) => {
   console.error("LOGIN FAILED ❌", err);
 });
+
