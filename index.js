@@ -42,32 +42,28 @@ client.once("ready", () => {
 });
 
 client.on("messageCreate", async (message) => {
-  console.log(
-    "SAW MESSAGE:",
-    message.channelId,
-    message.author.username,
-    message.content
-  );
+  console.log("SAW:", message.channelId, "expected:", SOURCE_CHANNEL_ID);
 
-  if (message.channelId !== SOURCE_CHANNEL_ID) return;
+  if (message.channelId !== SOURCE_CHANNEL_ID) {
+    console.log("SKIP (wrong channel)");
+    return;
+  }
 
   try {
-    // Convert embeds properly
-    const embeds = message.embeds?.map(e => e.toJSON()) ?? [];
-
-    // Convert attachments (Collection → array)
-    const files = [...message.attachments.values()].map(a => a.url);
-
+    console.log("SENDING to webhook...");
     await webhook.send({
-	content: message.content || null,
-	embeds: embeds.length ? embeds : undefined,
-	files: files.length ? files : undefined,
-
-	username: "Excellence",
-	avatarURL: "https://cdn.discordapp.com/attachments/1091844470737227944/1465524732677062729/ChatGPT_Image_Jan_27_2026_02_04_53_AM.png",
-
-	allowedMentions: { parse: [] },
-	});
+      content: message.content || null,
+      embeds: message.embeds?.length ? message.embeds.map(e => e.toJSON()) : undefined,
+      files: [...message.attachments.values()].map(a => a.url) || undefined,
+      username: "Excellence",
+      avatarURL: "https://cdn.discordapp.com/attachments/1091844470737227944/1465524732677062729/ChatGPT_Image_Jan_27_2026_02_04_53_AM.png",
+      allowedMentions: { parse: [] },
+    });
+    console.log("SENT ✅");
+  } catch (err) {
+    console.error("WEBHOOK FAILED ❌", err);
+  }
+});
 
 
     console.log("➡️ Forwarded message");
@@ -77,6 +73,7 @@ client.on("messageCreate", async (message) => {
 });
 
 client.login(BOT_TOKEN);
+
 
 
 
