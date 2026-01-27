@@ -42,7 +42,13 @@ client.once("ready", () => {
 });
 
 client.on("messageCreate", async (message) => {
-  // Only forward from the chosen channel
+  console.log(
+    "SAW MESSAGE:",
+    message.channelId,
+    message.author.username,
+    message.content
+  );
+
   if (message.channelId !== SOURCE_CHANNEL_ID) return;
 
   try {
@@ -71,5 +77,6 @@ client.on("messageCreate", async (message) => {
 });
 
 client.login(BOT_TOKEN);
+
 
 
