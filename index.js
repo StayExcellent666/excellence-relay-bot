@@ -52,19 +52,11 @@ client.on("messageCreate", async (message) => {
       ? message.embeds.map(e => {
           const embed = e.toJSON();
 
-          // Rename "Viewers" → "Gamers"
-          if (Array.isArray(embed.fields)) {
-            embed.fields = embed.fields.map(f => ({
-              ...f,
-              name: f.name === "Viewers" ? "Gamers" : f.name,
-            }));
-          }
-
           // Replace "streamcord.io" in footer
           if (embed.footer?.text) {
             embed.footer.text = embed.footer.text.replace(
               /streamcord\.io/gi,
-              "Excellence"
+              "brought to you by your Excellency"
             );
           }
 
@@ -93,3 +85,4 @@ client.on("messageCreate", async (message) => {
 
 // ---- LOGIN ----
 client.login(BOT_TOKEN);
+
