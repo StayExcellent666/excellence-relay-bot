@@ -1,7 +1,7 @@
 const express = require("express");
 const { Client, GatewayIntentBits, WebhookClient } = require("discord.js");
 
-// ---- WEB SERVER (Render needs this) ----
+// ================== Render web server (keeps service "web" healthy) ==================
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -10,17 +10,16 @@ app.listen(PORT, () => {
   console.log(`🌐 Listening on port ${PORT}`);
 });
 
-// ---- CONFIG ----
+// ================== ENV ==================
 const BOT_TOKEN = (process.env.BOT_TOKEN || "").trim();
 const SOURCE_CHANNEL_ID = (process.env.SOURCE_CHANNEL_ID || "").trim();
 
-// Collect all WEBHOOK_URL_* variables from env (WEBHOOK_URL_1, WEBHOOK_URL_2, ...)
+// Collect WEBHOOK_URL_1, WEBHOOK_URL_2, ... from environment
 const WEBHOOK_URLS = Object.entries(process.env)
-  .filter(([key, val]) => key.startsWith("WEBHOOK_URL_") && val && val.trim())
-  .sort((a, b) => a[0].localeCompare(b[0])) // keeps order: _1, _2, _3...
-  .map(([, val]) => val.trim());
+  .filter(([k, v]) => k.startsWith("WEBHOOK_URL_") && v && v.trim())
+  .sort((a, b) => a[0].localeCompare(b[0]))
+  .map(([, v]) => v.trim());
 
-// ---- ENV SANITY CHECK ----
 console.log("ENV CHECK:", {
   BOT_TOKEN: BOT_TOKEN ? "set" : "MISSING",
   SOURCE_CHANNEL_ID: SOURCE_CHANNEL_ID ? "set" : "MISSING",
@@ -31,13 +30,13 @@ if (!BOT_TOKEN || !SOURCE_CHANNEL_ID) {
   throw new Error("❌ Missing BOT_TOKEN or SOURCE_CHANNEL_ID");
 }
 if (WEBHOOK_URLS.length === 0) {
-  throw new Error("❌ No WEBHOOK_URL_* environment variables found");
+  throw new Error("❌ No WEBHOOK_URL_* variables found (e.g., WEBHOOK_URL_1)");
 }
 
-// Create webhook clients
+// Webhook clients
 const webhooks = WEBHOOK_URLS.map((url) => new WebhookClient({ url }));
 
-// ---- DISCORD CLIENT ----
+// ================== Discord client ==================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -50,27 +49,37 @@ client.once("ready", () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-// ---- MESSAGE HANDLER ----
-client.on("messageCreate", async (message) => {
-  // Optional debug
-  // console.log("SAW:", message.channelId, message.author.username);
+client.on("warn", (w) => console.warn("DISCORD WARN:", w));
+client.on("error", (e) => console.error("DISCORD ERROR:", e));
+process.on("unhandledRejection", (e) => console.error("UNHANDLED REJECTION:", e));
+process.on("uncaughtException", (e) => console.error("UNCAUGHT EXCEPTION:", e));
 
-  // Only forward from source channel
-  if (message.channelId !== SOURCE_CHANNEL_ID) return;
+// ================== Message handler ==================
+client.on("messageCreate", async (message) => {
+  // ---- Logging for ALL visible messages (including uptime messages)
+  // Includes message content so you can see which uptime number it saw.
+  console.log(
+    `SAW: guild="${message.guild?.name || "DM"}" channel="#${message.channel?.name || "unknown"}" ` +
+      `channelId=${message.channelId} author=${message.author.username} content="${(message.content || "").replace(/\s+/g, " ").slice(0, 200)}"`
+  );
+
+  // Only forward from the source channel
+  if (message.channelId !== SOURCE_CHANNEL_ID) {
+    console.log("SKIP: not source channel");
+    return;
+  }
 
   try {
-    // ---- MODIFY FOOTER EMBEDS ----
+    // ---- Force footer (rebrand Streamcord.io and ensure a footer exists)
     const embeds = message.embeds.length
       ? message.embeds.map((e) => {
           const embed = e.toJSON();
-        
-          // Replace footer -> "brought to you by your Excellency" in footer
-         if (embed.footer?.text) {
-          embed.footer.text = embed.footer.text.replace(/streamcord\.io/gi, "brought to you by your Excellency");
-          } else {
-          embed.footer = { text: "brought to you by your Excellency" };
-        }
 
+          if (embed.footer?.text) {
+            embed.footer.text = embed.footer.text.replace(/streamcord\.io/gi, "Excellence");
+          } else {
+            embed.footer = { text: "Excellence" };
+          }
 
           return embed;
         })
@@ -84,15 +93,16 @@ client.on("messageCreate", async (message) => {
       content: message.content || null,
       embeds,
       files,
-      username: message.member?.displayName || message.author.username,
-      avatarURL: message.author.displayAvatarURL(),
+      // ---- Always branded as Excellence
+      username: "Excellence",
+      avatarURL:
+        "https://cdn.discordapp.com/attachments/1091844470737227944/1465524732677062729/ChatGPT_Image_Jan_27_2026_02_04_53_AM.png",
       allowedMentions: { parse: [] },
     };
 
     // Send to all webhooks
     const results = await Promise.allSettled(webhooks.map((w) => w.send(payload)));
 
-    // Log failures (if any)
     const failed = results
       .map((r, i) => ({ r, i }))
       .filter(({ r }) => r.status === "rejected");
@@ -110,9 +120,7 @@ client.on("messageCreate", async (message) => {
   }
 });
 
-// ---- LOGIN ----
+// ================== Login ==================
 client.login(BOT_TOKEN).catch((err) => {
   console.error("LOGIN FAILED ❌", err);
 });
-
-
