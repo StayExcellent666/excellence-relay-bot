@@ -96,7 +96,7 @@ client.on("messageCreate", async (message) => {
       // ---- Always branded as Excellence
       username: "Excellence",
       avatarURL:
-        "https://raw.githubusercontent.com/StayExcellent666/excellence-relay-bot/main/avatar.png",
+        "avatarURL: "https://raw.githubusercontent.com/StayExcellent666/excellence-relay-bot/main/avatar.png?v=2",
       allowedMentions: { parse: [] },
     };
 
@@ -124,5 +124,6 @@ client.on("messageCreate", async (message) => {
 client.login(BOT_TOKEN).catch((err) => {
   console.error("LOGIN FAILED ❌", err);
 });
+
 
 
