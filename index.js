@@ -96,7 +96,7 @@ client.on("messageCreate", async (message) => {
       // ---- Always branded as Excellence
       username: "Excellence",
       avatarURL:
-        "https://cdn.discordapp.com/attachments/1091844470737227944/1465524732677062729/ChatGPT_Image_Jan_27_2026_02_04_53_AM.png",
+        "https://raw.githubusercontent.com/StayExcellent666/excellence-relay-bot/main/avatar.png",
       allowedMentions: { parse: [] },
     };
 
@@ -124,3 +124,4 @@ client.on("messageCreate", async (message) => {
 client.login(BOT_TOKEN).catch((err) => {
   console.error("LOGIN FAILED ❌", err);
 });
+
